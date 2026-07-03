@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse, hashlib, os, os.path, psycopg2, subprocess, sys
 

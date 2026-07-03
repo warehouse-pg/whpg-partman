@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse, psycopg2, re, sys, time
 from multiprocessing import Process
