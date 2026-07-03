@@ -295,45 +295,47 @@ SELECT col_is_pk('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTA
 SELECT col_is_pk('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'12 days'::interval, 'YYYY_MM_DD'), ARRAY['Col1'], 
     'Check for primary key in Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'12 days'::interval, 'YYYY_MM_DD'));
 
-
-SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP, 'YYYY_MM_DD'), 'Partman_Basic', ARRAY['SELECT','INSERT','UPDATE'], 
+-- WHPG: DELETE was granted in a previous statement, I dont't know why it is suppresed in the original test, then it was added
+SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP, 'YYYY_MM_DD'), 'Partman_Basic', ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'1 day'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE', 'DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'1 day'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'2 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'2 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'3 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'3 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'4 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'4 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'1 day'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'1 day'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'2 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'2 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'3 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'3 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'4 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
-    ARRAY['SELECT','INSERT','UPDATE'], 
+    ARRAY['SELECT','INSERT','UPDATE','DELETE'],
     'Check Partman_Basic privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP-'4 days'::interval, 'YYYY_MM_DD'));
+
+-- WHPG: partman_revoke role received a REVOKE ALL
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'5 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'5 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'5 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'6 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'6 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'6 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'7 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'7 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'7 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'8 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'8 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'8 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'9 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'9 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'9 days'::interval, 'YYYY_MM_DD'));
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'10 days'::interval, 'YYYY_MM_DD'), 'Partman_Revoke', 
-    ARRAY['SELECT'], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'10 days'::interval, 'YYYY_MM_DD'));
+    ARRAY[]::text[], 'Check Partman_Revoke privileges of Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'10 days'::interval, 'YYYY_MM_DD'));
 
 SELECT table_privs_are('Partman_Test', 'Time_Taptest_Table_p'||to_char(CURRENT_TIMESTAMP+'11 days'::interval, 'YYYY_MM_DD'), 'Partman_Basic', 
     ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 

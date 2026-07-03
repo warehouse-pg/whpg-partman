@@ -35,7 +35,8 @@ END $pg11_objects_check$;
 CREATE INDEX ON partman_test.template_id_taptest_table (col3);
 
 -- Regular unique indexes do not work on native in PG11 if the partition key isn't included
-CREATE UNIQUE INDEX ON partman_test.template_id_taptest_table (col4);
+-- WHPG: Had to add col1 to index due to ERROR:  UNIQUE index must contain all columns in the table's distribution key
+CREATE UNIQUE INDEX ON partman_test.template_id_taptest_table (col1, col4);
 
 SELECT create_parent('partman_test.id_taptest_table', 'col1', 'native', '10', p_jobmon := false, p_start_partition := '3000000000', p_template_table := 'partman_test.template_id_taptest_table');
 
@@ -52,11 +53,12 @@ SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000010', ARRAY['col1'], 
 SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000020', ARRAY['col1'], 'Check for primary key in id_taptest_table_p3000000020');
 SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000030', ARRAY['col1'], 'Check for primary key in id_taptest_table_p3000000030');
 SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000040', ARRAY['col1'], 'Check for primary key in id_taptest_table_p3000000040');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000000', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000000');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000010', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000010');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000020', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000020');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000030', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000030');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000040', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000040');
+-- WHPG: Changes required due to the UNIQUE index constraint that requires the distributed keys (Col1)
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000000', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000000');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000010', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000010');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000020', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000020');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000030', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000030');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000040', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000040');
 SELECT is_empty('SELECT * FROM ONLY partman_test.id_taptest_table', 'Check that parent table has had data moved to partition');
 SELECT results_eq('SELECT count(*)::int FROM partman_test.id_taptest_table', ARRAY[9], 'Check count from parent table');
 SELECT results_eq('SELECT count(*)::int FROM partman_test.id_taptest_table_p3000000000', ARRAY[9], 'Check count from id_taptest_table_p3000000000');

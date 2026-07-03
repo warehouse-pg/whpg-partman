@@ -21,7 +21,7 @@ CREATE TABLE partman_test.fk_test_reference (col2 text unique not null);
 INSERT INTO partman_test.fk_test_reference VALUES ('stuff');
 
 CREATE UNLOGGED TABLE partman_test.id_taptest_table (
-    col1 bigint 
+    col1 bigint
     , col2 text not null default 'stuff'
     , col3 timestamptz DEFAULT now()
     , col4 text) PARTITION BY RANGE (col1);
@@ -49,7 +49,8 @@ END $pg11_objects_check$;
 CREATE INDEX ON partman_test.template_id_taptest_table (col3);
 
 -- Regular unique indexes do not work on native in PG11 if the partition key isn't included
-CREATE UNIQUE INDEX ON partman_test.template_id_taptest_table (col4);
+-- WHPG: Had to add col1 to index due to ERROR:  UNIQUE index must contain all columns in the table's distribution key
+CREATE UNIQUE INDEX ON partman_test.template_id_taptest_table (col1, col4);
 
 SELECT create_parent('partman_test.id_taptest_table', 'col1', 'native', '10', p_jobmon := false, p_start_partition := '3000000000', p_template_table := 'partman_test.template_id_taptest_table');
 UPDATE part_config SET inherit_privileges = TRUE;
@@ -76,11 +77,12 @@ SELECT col_is_fk('partman_test', 'id_taptest_table_p3000000020', 'col2', 'Check 
 SELECT col_is_fk('partman_test', 'id_taptest_table_p3000000030', 'col2', 'Check that foreign key was inherited to id_taptest_table_p3000000030');
 SELECT col_is_fk('partman_test', 'id_taptest_table_p3000000040', 'col2', 'Check that foreign key was inherited to id_taptest_table_p3000000040');
 --SELECT col_is_fk('partman_test', 'id_taptest_table_default', 'col2', 'Check that foreign key was inherited to id_taptest_table_default');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000000', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000000');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000010', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000010');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000020', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000020');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000030', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000030');
-SELECT is_indexed('partman_test', 'id_taptest_table_p3000000040', 'col4', 'Check that unique index was inherited to id_taptest_table_p3000000040');
+-- WHPG: Changes required due to the UNIQUE index constraint that requires the distributed keys (Col1)
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000000', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000000');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000010', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000010');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000020', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000020');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000030', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000030');
+SELECT is_indexed('partman_test', 'id_taptest_table_p3000000040', ARRAY['col1', 'col4'], 'Check that unique index was inherited to id_taptest_table_p3000000040');
 --SELECT is_indexed('partman_test', 'id_taptest_table_default', 'col4', 'Check that unique index was inherited to id_taptest_table_default');
 SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000000', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000000');
 SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000010', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000010');
@@ -154,16 +156,24 @@ SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000060', ARRAY['col1'], 
 SELECT col_is_pk('partman_test', 'id_taptest_table_p3000000070', ARRAY['col1'], 'Check for primary key in id_taptest_table_p3000000070');
 SELECT col_is_fk('partman_test', 'id_taptest_table_p3000000060', 'col2', 'Check that foreign key was inherited to id_taptest_table_p3000000060');
 SELECT col_is_fk('partman_test', 'id_taptest_table_p3000000070', 'col2', 'Check that foreign key was inherited to id_taptest_table_p3000000070');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000000', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000000');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000010', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000010');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000020', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000020');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000030', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000030');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000040', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000040');
+
+-- WHPG: DELETE was granted in a previous statement, I dont't know why it is suppresed in the original test, then it was added
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000000', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000000');
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000010', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000010');
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000020', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000020');
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000030', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000030');
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000040', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000040');
 --SELECT table_privs_are('partman_test', 'id_taptest_table_default', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_default');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000050', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000050');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000050', 'partman_revoke', ARRAY['SELECT'], 'Check partman_revoke privileges of id_taptest_table_p3000000050');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000060', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE'], 'Check partman_basic privileges of id_taptest_table_p3000000060');
-SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000060', 'partman_revoke', ARRAY['SELECT'], 'Check partman_revoke privileges of id_taptest_table_p3000000060');
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000050', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000050');
+
+-- WHPG: partman_revoke role received a REVOKE ALL
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000050', 'partman_revoke', ARRAY[]::text[], 'Check partman_revoke privileges of id_taptest_table_p3000000050');
+
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000060', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE', 'DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000060');
+
+-- WHPG: partman_revoke role received a REVOKE ALL
+SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000060', 'partman_revoke', ARRAY[]::text[], 'Check partman_revoke privileges of id_taptest_table_p3000000060');
+
 SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000070', 'partman_basic', ARRAY['SELECT','INSERT','UPDATE','DELETE'], 'Check partman_basic privileges of id_taptest_table_p3000000070');
 SELECT table_owner_is ('partman_test', 'id_taptest_table_p3000000070', 'partman_owner', 'Check that ownership change worked for id_taptest_table_p3000000070');
 SELECT table_privs_are('partman_test', 'id_taptest_table_p3000000070', 'partman_revoke', '{}'::text[], 'Check partman_revoke has no privileges on id_taptest_table_p3000000070');

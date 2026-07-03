@@ -380,6 +380,8 @@ LOOP
             END IF;
 
             -- Get everything from the current child minimum up to the multiples of the given interval
+            -- WHPG: Commented out due to the GP limitation for a CTE with multiple writable stms
+            /***
             EXECUTE format('WITH move_data AS (
                                     DELETE FROM %I.%I WHERE %s <= %L RETURNING %s )
                                   INSERT INTO %I.%I (%5$s) SELECT %5$s FROM move_data'
@@ -390,7 +392,36 @@ LOOP
                 , v_column_list
                 , v_target_schema
                 , v_target_tablename);
+            ***/
+
+            -- WHPG: Replaced CTE by TEMP table -> INSERT -> DELETE -> DROP temp
+            EXECUTE format('CREATE TEMP TABLE move_data AS (SELECT * FROM %1$I.%2$I WHERE %3$s <= %4$L)'
+                 , v_parent_schema
+                 , v_child_table
+                 , v_partition_expression
+                 , v_child_min_time + (v_batch_interval_time * v_inner_loop_count)
+                 , v_column_list
+                 , v_target_schema
+                 , v_target_tablename);
+
+            EXECUTE format('INSERT INTO %6$I.%7$I (%5$s) SELECT %5$s FROM move_data'
+                 , v_parent_schema
+                 , v_child_table
+                 , v_partition_expression
+                 , v_child_min_time + (v_batch_interval_time * v_inner_loop_count)
+                 , v_column_list
+                 , v_target_schema
+                 , v_target_tablename);
+
+            EXECUTE format('DELETE FROM ONLY %1$I.%2$I AS main USING move_data AS temp WHERE (main.*) IS NOT DISTINCT FROM (temp.*)'
+                , v_parent_schema
+                , v_child_table);
             GET DIAGNOSTICS v_rowcount = ROW_COUNT;
+
+            EXECUTE 'DROP TABLE move_data';
+            -- WHPG: end
+
+            --GET DIAGNOSTICS v_rowcount = ROW_COUNT;
             v_total := v_total + v_rowcount;
             v_child_loop_total := v_child_loop_total + v_rowcount;
             IF v_jobmon_schema IS NOT NULL THEN
@@ -432,6 +463,8 @@ LOOP
             END IF;
 
             -- Get everything from the current child minimum up to the multiples of the given interval
+            -- WHPG: Commented out due to the GP limitation for a CTE with multiple writable stms
+            /***
             EXECUTE format('WITH move_data AS (
                                     DELETE FROM %I.%I WHERE %s <= %L RETURNING %s)
                                   INSERT INTO %I.%I (%5$s) SELECT %5$s FROM move_data'
@@ -442,7 +475,36 @@ LOOP
                 , v_column_list
                 , v_target_schema
                 , v_target_tablename);
+            ***/
+
+            -- WHPG: Replaced CTE by TEMP table -> INSERT -> DELETE -> DROP temp
+            EXECUTE format('CREATE TEMP TABLE move_data AS (SELECT * FROM %1$I.%2$I WHERE %3$s <= %4$L)'
+                , v_parent_schema
+                , v_child_table
+                , v_partition_expression
+                , v_child_min_id + (v_batch_interval_id * v_inner_loop_count)
+                , v_column_list
+                , v_target_schema
+                , v_target_tablename);
+
+            EXECUTE format('INSERT INTO %6$I.%7$I (%5$s) SELECT %5$s FROM move_data'
+                , v_parent_schema
+                , v_child_table
+                , v_partition_expression
+                , v_child_min_id + (v_batch_interval_id * v_inner_loop_count)
+                , v_column_list
+                , v_target_schema
+                , v_target_tablename);
+
+            EXECUTE format('DELETE FROM ONLY %1$I.%2$I AS main USING move_data AS temp WHERE (main.*) IS NOT DISTINCT FROM (temp.*)'
+                , v_parent_schema
+                , v_child_table);
             GET DIAGNOSTICS v_rowcount = ROW_COUNT;
+
+            EXECUTE 'DROP TABLE move_data';
+            -- WHPG: end
+
+            --GET DIAGNOSTICS v_rowcount = ROW_COUNT;
             v_total := v_total + v_rowcount;
             v_child_loop_total := v_child_loop_total + v_rowcount;
             IF v_jobmon_schema IS NOT NULL THEN
