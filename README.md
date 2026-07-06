@@ -23,6 +23,8 @@ WarehousePG (WHPG) Restriction
 ------------
 WarehousePG only supports the native partitoning, i.e., the ```p_type = 'native'``` (this parameter must be '**native**').
 
+Also note native mode requires the parent table to already be PARTITION BY RANGE (...) before calling create_parent().
+
 INSTALLATION
 ------------
 Requirement: 
