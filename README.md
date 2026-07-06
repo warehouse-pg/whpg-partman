@@ -19,6 +19,10 @@ If you're looking for a partitioning system that handles any range type beyond j
 
 If you're still trying to evaluate whether partitioning is a good choice for your environment, keep an eye on the HypoPG project. Version 2 will have a hypothetical partitioning feature that will let you evaluate different partitioning schemes without requiring you to actually partition your data. I may see about integrating this feature into pg_partman once it is available. - <https://hypopg.readthedocs.io>
 
+WarehousePG (WHPG) Restriction
+------------
+WarehousePG only supports the native partitoning, i.e., the ```p_type = 'native'``` (this parameter must be '**native**').
+
 INSTALLATION
 ------------
 Requirement: 
