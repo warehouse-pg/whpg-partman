@@ -206,9 +206,10 @@ IF v_default_exists THEN
     -- Have to move data out to temporary location, create child table, then move it back
 
     -- Temp table created above to avoid excessive temp creation in loop
-    EXECUTE format('WITH partition_data AS (
-            DELETE FROM %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s RETURNING *)
-        INSERT INTO partman_temp_data_storage (%6$s) SELECT %6$s FROM partition_data'
+    -- WHPG: Replaced CTE by INSERT ... SELECT -> DELETE over the same range predicate
+    -- (GP only supports a CTE with one writable clause in a non-writable context)
+    EXECUTE format('INSERT INTO partman_temp_data_storage (%6$s)
+            SELECT %6$s FROM %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s'
         , v_source_schemaname
         , v_source_tablename
         , v_control
@@ -216,22 +217,34 @@ IF v_default_exists THEN
         , v_max_partition_id
         , v_column_list);
 
+    EXECUTE format('DELETE FROM %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s'
+        , v_source_schemaname
+        , v_source_tablename
+        , v_control
+        , v_min_partition_id
+        , v_max_partition_id);
+    -- WHPG: end
+
     PERFORM @extschema@.create_partition_id(p_parent_table, v_partition_id, p_analyze);
 
-    EXECUTE format('WITH partition_data AS (
-            DELETE FROM partman_temp_data_storage RETURNING *)
-        INSERT INTO %1$I.%2$I (%3$s) SELECT %3$s FROM partition_data'
+    -- WHPG: Replaced CTE by INSERT ... SELECT -> DELETE. The DELETE is kept last so the
+    -- GET DIAGNOSTICS ROW_COUNT below still reports the number of rows moved.
+    EXECUTE format('INSERT INTO %1$I.%2$I (%3$s) SELECT %3$s FROM partman_temp_data_storage'
         , v_source_schemaname
         , v_current_partition_name
         , v_column_list);
+
+    EXECUTE 'DELETE FROM partman_temp_data_storage';
+    -- WHPG: end
 
 ELSE
 
     PERFORM @extschema@.create_partition_id(p_parent_table, v_partition_id, p_analyze);
 
-    EXECUTE format('WITH partition_data AS (
-            DELETE FROM ONLY %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s RETURNING *)
-        INSERT INTO %1$I.%6$I (%7$s) SELECT %7$s FROM partition_data'
+    -- WHPG: Replaced CTE by INSERT ... SELECT -> DELETE over the same range predicate.
+    -- The DELETE is kept last so GET DIAGNOSTICS ROW_COUNT still reports rows moved.
+    EXECUTE format('INSERT INTO %1$I.%6$I (%7$s)
+            SELECT %7$s FROM ONLY %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s'
         , v_source_schemaname
         , v_source_tablename
         , v_control
@@ -239,6 +252,14 @@ ELSE
         , v_max_partition_id
         , v_current_partition_name
         , v_column_list);
+
+    EXECUTE format('DELETE FROM ONLY %1$I.%2$I WHERE %3$I >= %4$s AND %3$I < %5$s'
+        , v_source_schemaname
+        , v_source_tablename
+        , v_control
+        , v_min_partition_id
+        , v_max_partition_id);
+    -- WHPG: end
 
 END IF;
 
