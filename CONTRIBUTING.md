@@ -1,0 +1,62 @@
+# Contributing
+
+We warmly welcome and greatly appreciate contributions from the
+community. By participating you agree to the [code of
+conduct](https://github.com/warehouse-pg/whpg-partman/blob/whpg/CODE-OF-CONDUCT.md).
+Overall, we follow WHPG's comprehensive contribution policy. Please
+refer to it [here](https://github.com/warehouse-pg/warehouse-pg/blob/main/CONTRIBUTING.md)
+for details.
+
+## Getting Started
+
+* Fork the `whpg-partman` repository on GitHub
+* Clone the forked repository
+* Follow the README to set up your environment and run the tests
+
+## Creating a change
+
+* Create your own feature branch (e.g. `git checkout -b
+  my_feature_branch`) and make changes on this branch.
+* Try and follow similar coding styles as found throughout the code
+  base.
+* Make commits as logical units for ease of reviewing.
+* Rebase on `origin/whpg` often to stay in sync. The `whpg` branch
+  builds for both WarehousePG 7 and 19; the `development` branch tracks
+  upstream pg_partman and takes no WarehousePG changes.
+* Edit the sources under `sql/types`, `sql/tables`, `sql/functions` and
+  `sql/procedures`; `make` concatenates them into the installed
+  `sql/pg_partman--<version>.sql`, which is not checked in.
+* Mark WarehousePG-specific changes to the upstream SQL with
+  `-- WHPG:` ... `-- WHPG: end` comments, as the existing adaptations
+  do, so they can be found when syncing with upstream.
+* Add or update tests to cover your code. The tests are pgTAP scripts;
+  the ones under [`test/test_native`](test/test_native) are what the
+  packaging smoke test runs against a WarehousePG cluster with
+  `pg_prove -ovf`, as described in the README. Keep changes working on
+  both WarehousePG 7 and 19.
+* Ensure a well written commit message as explained
+  [here](https://chris.beams.io/posts/git-commit/).
+* Push your local branch to the fork (e.g. `git push <your_fork>
+  my_feature_branch`)
+
+## Submitting a Pull Request
+
+* Create a [pull request from your
+  fork](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork).
+* Address PR feedback with fixup and/or squash commits:
+```
+git add .
+git commit --fixup <commit SHA>
+  -- or --
+git commit --squash <commit SHA>
+```
+* Once approved, before merging into `whpg` squash your fixups with:
+```
+git rebase -i --autosquash origin/whpg
+git push --force-with-lease <your_fork> my_feature_branch
+```
+
+Your contribution will be analyzed for product fit and engineering
+quality prior to merging. Your pull request is much more likely to be
+accepted if it is small and focused with a clear message that conveys
+the intent of your change.
