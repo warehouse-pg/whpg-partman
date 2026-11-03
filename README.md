@@ -1,4 +1,72 @@
-[![PGXN version](https://badge.fury.io/pg/pg_partman.svg)](https://badge.fury.io/pg/pg_partman)
+# WarehousePG pg_partman
+
+## Introduction
+
+pg_partman (PG Partition Manager) creates and manages time-based and
+serial-based partition sets: it creates the child tables ahead of time, can
+move existing data into them in batches, and can drop or detach old partitions
+under a retention policy. A background worker runs the maintenance without an
+external scheduler.
+
+This repository is a fork of the open-source pg_partman project
+(github.com/pgpartman/pg_partman), renamed to whpg-partman and maintained for
+WarehousePG. The `whpg` branch is based on pg_partman 4.7.4, with the
+WarehousePG changes on top, and builds for WarehousePG 7 and 19. The
+`development` branch tracks upstream.
+
+On WarehousePG only native partitioning is supported: `create_parent()` must
+be called with `p_type = 'native'` on a parent table that is already
+`PARTITION BY RANGE`. See the WarehousePG (WHPG) Restriction section below.
+
+## Building and Testing
+
+With the WarehousePG `pg_config` on your `PATH`:
+
+```
+make
+make install         # may need root to write into $GPHOME
+```
+
+The tests are pgTAP scripts. They need a running WarehousePG cluster with
+[pgTAP](https://pgtap.org) installed (built from a recent `main` commit; the
+1.3.4 release does not build against WarehousePG 19) and the `pg_prove` runner
+that comes with it. Create the extensions as the tests expect them:
+
+```sql
+CREATE SCHEMA partman;
+CREATE EXTENSION pg_partman SCHEMA partman;
+CREATE EXTENSION pgtap;
+```
+
+Then run the native partitioning tests, which are what the packaging smoke
+test runs:
+
+```
+pg_prove -ovf -U gpadmin --dbname postgres test/test_native/*.sql
+```
+
+`test/test_native/test-time-custom-30sec-native.sql` fails when it starts
+close to a 30-second boundary; run it again if it does. Upstream recommends
+raising `max_locks_per_transaction` to 128 before running the sub-partitioning
+tests. The tests under `test/test_bgw` use trigger-based partitioning and do
+not run on WarehousePG.
+
+The upstream pg_partman documentation is kept below; its issue and
+discussion links refer to the upstream project. Issues with the WarehousePG
+fork go to this repository's
+[Issues](https://github.com/warehouse-pg/whpg-partman/issues).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE-OF-CONDUCT.md). To report a security issue, see
+[SECURITY.md](SECURITY.md).
+
+## License
+
+PostgreSQL License. See [LICENSE.md](LICENSE.md).
+
+---
 
 PG Partition Manager
 ====================
