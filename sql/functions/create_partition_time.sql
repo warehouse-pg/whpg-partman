@@ -195,7 +195,9 @@ FOREACH v_time IN ARRAY p_partition_times LOOP
 
     -- Close parentheses on LIKE are below due to differing requirements of native subpartitioning
     -- Same INCLUDING list is used in create_parent()
-    v_sql := v_sql || format(' TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING STORAGE INCLUDING COMMENTS '
+    -- WHPG: a table created with LIKE gets default_table_access_method (heap), not the parent's, so also
+    -- copy the access method, reloptions and column encodings to keep AO/AOCO storage on children.
+    v_sql := v_sql || format(' TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING STORAGE INCLUDING COMMENTS INCLUDING AM INCLUDING RELOPT INCLUDING ENCODING '
                                 , v_parent_schema
                                 , v_partition_name
                                 , v_parent_schema
